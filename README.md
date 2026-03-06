@@ -7,13 +7,13 @@ A Python-based OSINT utility that performs carrier lookup, number validation, ge
 
 ## Features
 
-- ✅ Phone number validation and format normalization (E164, International, National)
-- 📡 Carrier and network type identification (Mobile, VoIP, Fixed Line, MVNO detection)
-- 🌍 Country-level geolocation with coordinates, capital, region, population, and Google Maps link
-- 🕐 Timezone resolution
-- 🧠 OSINT surface analysis — flags anomalies like VoIP usage, unresolved carriers, or non-geographic numbers
-- 📄 JSON report export with `--export` flag
-- 🎨 Clean terminal output with color-coded intelligence report
+-  Phone number validation and format normalization (E164, International, National)
+-  Carrier and network type identification (Mobile, VoIP, Fixed Line, MVNO detection)
+-  Country-level geolocation with coordinates, capital, region, population, and Google Maps link
+-  Timezone resolution
+-  OSINT surface analysis — flags anomalies like VoIP usage, unresolved carriers, or non-geographic numbers
+-  JSON report export with `--export` flag
+-  Clean terminal output with color-coded intelligence report
 
 ---
 
@@ -93,6 +93,7 @@ python phoneint.py +919876543210 --export
 ```
 
 ---
+
 ![Demo Output](screenshots/phoneINT_output.png)
 
 ## Disclaimer
