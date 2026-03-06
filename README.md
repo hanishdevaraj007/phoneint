@@ -94,7 +94,7 @@ python phoneint.py +919876543210 --export
 
 ---
 
-##Demo Output
+## Demo Output
 
 ![Demo Output](screenshots/phoneINT_output.png)
 
