@@ -96,6 +96,10 @@ python phoneint.py +919876543210 --export
 
 ![Demo Output](screenshots/phoneINT_output.png)
 
+## Future Scaling
+- To scale this as a Web-application as well as a CLI tool.
+- Add addition features such segregating information from other OSINT tools
+
 ## Disclaimer
 
 > This tool is intended for **educational purposes and authorized OSINT investigations only**.  
