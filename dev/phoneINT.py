@@ -30,13 +30,13 @@ class Color:
 
 def banner():
     print(f"""
-{Color.CYAN}{Color.BOLD}
 ██████╗ ██╗  ██╗ ██████╗ ███╗   ██╗███████╗██╗███╗   ██╗████████╗
 ██╔══██╗██║  ██║██╔═══██╗████╗  ██║██╔════╝██║████╗  ██║╚══██╔══╝
 ██████╔╝███████║██║   ██║██╔██╗ ██║█████╗  ██║██╔██╗ ██║   ██║   
 ██╔═══╝ ██╔══██║██║   ██║██║╚██╗██║██╔══╝  ██║██║╚██╗██║   ██║   
 ██║     ██║  ██║╚██████╔╝██║ ╚████║███████╗██║██║ ╚████║   ██║   
 ╚═╝     ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝╚══════╝╚═╝╚═╝  ╚═══╝   ╚═╝   
+  
 {Color.RESET}
 {Color.YELLOW}  Phone Number OSINT Intelligence Tool | by Hanish D{Color.RESET}
 {Color.RED}  [!] For educational and authorized use only{Color.RESET}
@@ -96,13 +96,21 @@ def extract_metadata(parsed) -> dict:
 def geolocate(parsed) -> dict:
     try:
         region_code = phonenumbers.region_code_for_number(parsed)
+        if not region_code:
+            return {"Error": "Could not determine country region code."}
+            
         url = f"https://restcountries.com/v3.1/alpha/{region_code}"
         response = requests.get(url, timeout=8)
 
         if response.status_code == 200:
-            data = response.json()[0]
+            json_data = response.json()
+            # Safety check: verify response is a list and contains elements
+            if not isinstance(json_data, list) or len(json_data) == 0:
+                return {"Error": "Empty data structure returned from API"}
+                
+            data = json_data[0]
             latlng = data.get("latlng", [None, None])
-            capital = data.get("capital", ["Unknown"])[0]
+            capital = data.get("capital", ["Unknown"])[0] if data.get("capital") else "Unknown"
             population = data.get("population", "Unknown")
             region = data.get("region", "Unknown")
             subregion = data.get("subregion", "Unknown")
@@ -113,11 +121,11 @@ def geolocate(parsed) -> dict:
                 "Capital":      capital,
                 "Region":       region,
                 "Subregion":    subregion,
-                "Latitude":     latlng[0] if latlng else "Unknown",
-                "Longitude":    latlng[1] if latlng else "Unknown",
+                "Latitude":     latlng[0] if latlng and len(latlng) > 0 else "Unknown",
+                "Longitude":    latlng[1] if latlng and len(latlng) > 1 else "Unknown",
                 "Population":   f"{population:,}" if isinstance(population, int) else population,
                 "Flag":         flag,
-                "Maps Link":    f"https://www.google.com/maps?q={latlng[0]},{latlng[1]}" if latlng[0] else "Unavailable"
+                "Maps Link":    f"https://www.google.com/maps?q={latlng[0]},{latlng[1]}" if latlng and latlng[0] else "Unavailable"
             }
         else:
             return {"Error": f"HTTP {response.status_code} from restcountries API"}
@@ -185,6 +193,7 @@ def export_json(raw_number: str, metadata: dict, geo: dict, hints: list):
         json.dump(report, f, indent=4)
     print(f"{Color.GREEN}[✓] Report saved to {filename}{Color.RESET}\n")
 
+
 # Main
 def main():
     banner()
@@ -212,9 +221,9 @@ def main():
     metadata    = extract_metadata(parsed)
     geo         = geolocate(parsed)
     hints       = osint_hints(metadata)
-
+    
     print_report(args.number, metadata, geo, hints)
-
+    
     if args.export:
         export_json(args.number, metadata, geo, hints)
 
