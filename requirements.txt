@@ -1,0 +1,13 @@
+# Core
+phonenumbers>=8.13.0
+requests>=2.31.0
+
+# Tier 2 plugins (breach_check.py, reputation.py) call HTTPS APIs using
+# `requests` above — no extra packages needed for them specifically.
+# They do need API keys set as environment variables, not in this file:
+#   HIBP_API_KEY            -> https://haveibeenpwned.com/API/Key
+#   ABSTRACTAPI_PHONE_KEY   -> https://www.abstractapi.com/api/phone-validation-api
+
+# Planned (GUI phase, not required yet):
+# fastapi>=0.110.0
+# uvicorn>=0.29.0
