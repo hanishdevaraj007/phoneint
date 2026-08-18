@@ -10,4 +10,4 @@ requests>=2.31.0
 
 # Planned (GUI phase, not required yet):
 # fastapi>=0.110.0
-# uvicorn>=0.29.0
+# uvicorn>=0.29.0   
