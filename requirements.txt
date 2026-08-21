@@ -2,12 +2,19 @@
 phonenumbers>=8.13.0
 requests>=2.31.0
 
-# Tier 2 plugins (breach_check.py, reputation.py) call HTTPS APIs using
-# `requests` above — no extra packages needed for them specifically.
-# They do need API keys set as environment variables, not in this file:
-#   HIBP_API_KEY            -> https://haveibeenpwned.com/API/Key
-#   ABSTRACTAPI_PHONE_KEY   -> https://www.abstractapi.com/api/phone-validation-api
+# Windows terminal support — translates ANSI color codes into Windows
+# console calls. Required for colors to render correctly in cmd.exe /
+# older PowerShell. Safe/no-op on macOS/Linux too.
+colorama>=0.4.6
+
+# Loads API keys from a .env file instead of requiring manual
+# environment-variable setup every session (esp. useful on Windows).
+python-dotenv>=1.0.0
+
+# ── Tier 2 plugin API keys (put these in a .env file, NOT here) ──
+#   HIBP_API_KEY            -> https://haveibeenpwned.com/API/Key   (paid)
+#   ABSTRACTAPI_PHONE_KEY   -> https://www.abstractapi.com/api/phone-validation-api (free tier)
 
 # Planned (GUI phase, not required yet):
 # fastapi>=0.110.0
-# uvicorn>=0.29.0   
+# uvicorn>=0.29.0
