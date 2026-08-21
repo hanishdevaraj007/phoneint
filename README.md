@@ -17,34 +17,69 @@ PhoneINT is evolving from a single CLI script into a modular OSINT framework wit
 
 ## Status
 
-**Current version:** CLI-only, single-file script (`phoneINT.py`)
-**In progress:** Core engine refactor → plugin architecture → CLI/GUI split (see [Roadmap](#roadmap--architecture) below)
+**Current version:** Tier 2 complete — modular plugin engine, 7 active plugins, CLI interface.
+**Next up:** Tier 3 (correlation engine, composite risk scoring, batch mode, GUI dashboard) — see [Roadmap](#roadmap--architecture) below.
+
+✅ Tier 1 — Core engine & plugin architecture
+✅ Tier 2 — Breach check, reputation/fraud scoring, digital footprint links, porting detection
+⬜ Tier 3 — Correlation engine, composite scoring, case management, PDF/graph export, GUI
 
 ---
 
-## ✅ Current Features (v1 — CLI)
+## ✅ Current Features (Tier 2 — CLI, modular plugin engine)
 
-- **Validation & normalization** — E164, International, and National formats via `phonenumbers`
-- **Carrier & line-type identification** — Mobile, Fixed Line, VoIP, Toll Free, Premium Rate, MVNO hints
-- **Country-level geolocation** — capital, region, subregion, coordinates, population, Google Maps link (via `restcountries.com`, no key required)
-- **Timezone resolution** — all timezones associated with the number's region
-- **OSINT surface analysis** — flags anomalies: VoIP usage, unresolved carrier (possible MVNO/eSIM/porting), unresolved region (possible satellite/non-geographic number)
-- **JSON report export** — `--export` flag saves a timestamped intelligence report
-- **Interactive & argument modes** — run with a number as an argument or be prompted
-- **Color-coded terminal report** — readable, structured CLI output
+Every feature below runs through the shared `phoneint_core` plugin engine — the CLI is a thin renderer on top of it, so the exact same logic will power the future GUI.
 
-### Requirements
+**Tier 1 — offline / no API key required**
+- Validation & normalization — E164, International, National formats
+- Carrier & line-type identification — Mobile, Fixed Line, VoIP, Toll Free, Premium Rate
+- Country-level geolocation — capital, region, coordinates, population, Google Maps link (`restcountries.com`, no key)
+- Timezone resolution
+- OSINT surface analysis — flags VoIP usage, unresolved carrier, unresolved region
+
+**Tier 2 — new in this release**
+- **Digital footprint / pivot links** — generates Google, WhatsApp, Telegram, Truecaller, Facebook, and Sync.me search URLs for the number. No scraping, no auth bypass — just the same URLs a human investigator would construct by hand. No API key needed.{
+    "Carrier": "Airtel",
+    "Number Type": "Mobile"
+}
+- **Breach exposure check** — queries HaveIBeenPwned for known breaches tied to the number. Requires your own `HIBP_API_KEY` (HIBP is a paid API as of 2025); the plugin cleanly reports `[skipped]` if you haven't set one, rather than failing the whole run.
+- **Reputation / fraud scoring** — live validation, line type, carrier, and location via AbstractAPI. Requires a free `ABSTRACTAPI_PHONE_KEY`.
+- **Porting detection** — compares the *static* carrier (from the offline `phonenumbers` database) against the *live* carrier (from the reputation plugin). A mismatch is a real signal the number has been ported to a new carrier since the static snapshot.
+
+Every plugin fails independently — one API being down, rate-limited, or unconfigured never crashes the rest of the report.
+
+### Setup (Windows)
+
+```powershell
+git clone https://github.com/yourusername/phoneint.git
+cd phoneint
+pip install -r requirements.txt
+
+# Copy the example env file and fill in your keys
+copy .env.example .env
+notepad .env
 ```
-phonenumbers
-requests
+
+Your `.env` should look like:
 ```
+HIBP_API_KEY=your_hibp_key_here
+ABSTRACTAPI_PHONE_KEY=your_abstractapi_key_here
+```
+
+Leave either blank and that plugin will simply report `[skipped]` — the rest of the tool works fully without any keys.
 
 ### Usage
-```bash
-python phoneINT.py                      # interactive mode
-python phoneINT.py +919876543210        # direct lookup
-python phoneINT.py +919876543210 --export   # save JSON report
+```powershell
+python cli\phoneint_cli.py                          # interactive mode
+python cli\phoneint_cli.py +919876543210             # direct lookup
+python cli\phoneint_cli.py +919876543210 --export    # save JSON report
 ```
+
+### Running the tests
+```powershell
+python tests\test_full_flow.py
+```
+13 tests cover: number parsing/validation, every plugin's success path, the no-keys-configured skip behavior, JSON export shape, porting mismatch detection, and plugin registry integrity (no duplicate names, no unresolvable dependencies).
 
 ---
 
@@ -95,11 +130,12 @@ phoneint/
 - [ ] Number porting / carrier-history detection
 - [ ] Batch mode — CSV input, bulk report output
 
-**Tier 2 — New enrichment sources**
-- [ ] Breach exposure check (HaveIBeenPwned API)
-- [ ] Fraud/reputation scoring (Numverify, AbstractAPI, or IPQualityScore)
-- [ ] Footprint URL generation — reverse-lookup and social search links (Google, Telegram, WhatsApp click-to-chat, etc.) without scraping private/authenticated data
-- [ ] Username correlation pivot (WhatsMyName-style, when a name/handle surfaces)
+**Tier 2 — New enrichment sources ✅ COMPLETE**
+- [x] Breach exposure check (HaveIBeenPwned API)
+- [x] Fraud/reputation scoring (AbstractAPI)
+- [x] Footprint URL generation — reverse-lookup and social search links (Google, Telegram, WhatsApp click-to-chat, Truecaller, Facebook, Sync.me) without scraping private/authenticated data
+- [x] Porting detection (static vs. live carrier comparison)
+- [ ] Username correlation pivot (WhatsMyName-style, when a name/handle surfaces) — deferred to Tier 3
 
 **Tier 3 — Differentiators**
 - [ ] **Correlation engine** — cross-references results across plugins into a single confidence-scored profile, not just a list of raw hits
