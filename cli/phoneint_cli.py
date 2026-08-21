@@ -17,6 +17,22 @@ from datetime import datetime
 # the project root to the path so `phoneint_core` is importable.
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+# colorama translates ANSI escape codes into Windows console API calls.
+# Without this, raw \033[...m codes print as garbage on cmd.exe/older
+# PowerShell. autoreset=True means we don't have to worry about a
+# crash leaving the terminal stuck in a color.
+from colorama import init as colorama_init
+colorama_init(autoreset=True)
+
+# Load API keys from a .env file in the project root if present, so
+# Windows users don't have to set environment variables manually every
+# session. Safe no-op if python-dotenv isn't installed or .env is absent.
+try:
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
+except ImportError:
+    pass
+
 from phoneint_core.engine import run_investigation, NumberParseError
 from phoneint_core.models import InvestigationReport
 
@@ -77,6 +93,49 @@ def print_report(report: InvestigationReport):
             print(f"    {Color.CYAN}→{Color.RESET} {hint}")
     else:
         print(f"    {Color.RED}{surface.error if surface else 'No data'}{Color.RESET}")
+
+    footprint = report.get("footprint")
+    print(f"\n{Color.GREEN}{Color.BOLD}[+] DIGITAL FOOTPRINT / PIVOT LINKS{Color.RESET}")
+    if footprint and footprint.status == "ok":
+        for k, v in footprint.data.get("links", {}).items():
+            print(f"    {Color.YELLOW}{k:<26}{Color.RESET}: {v}")
+    else:
+        print(f"    {Color.RED}{footprint.error if footprint else 'No data'}{Color.RESET}")
+
+    breach = report.get("breach_check")
+    print(f"\n{Color.GREEN}{Color.BOLD}[+] BREACH EXPOSURE (HaveIBeenPwned){Color.RESET}")
+    if breach and breach.status == "ok":
+        count = breach.data.get("breaches_found", 0)
+        if count == 0:
+            print(f"    {Color.CYAN}→{Color.RESET} No known breaches")
+        else:
+            print(f"    {Color.RED}→ {count} breach(es) found:{Color.RESET}")
+            for name in breach.data.get("breaches", []):
+                print(f"        - {name}")
+    elif breach and breach.status == "skipped":
+        print(f"    {Color.YELLOW}[skipped] {breach.error}{Color.RESET}")
+    else:
+        print(f"    {Color.RED}{breach.error if breach else 'No data'}{Color.RESET}")
+
+    reputation = report.get("reputation")
+    print(f"\n{Color.GREEN}{Color.BOLD}[+] REPUTATION / VALIDATION (AbstractAPI){Color.RESET}")
+    if reputation and reputation.status == "ok":
+        for k, v in reputation.data.items():
+            print(f"    {Color.YELLOW}{k:<26}{Color.RESET}: {v}")
+    elif reputation and reputation.status == "skipped":
+        print(f"    {Color.YELLOW}[skipped] {reputation.error}{Color.RESET}")
+    else:
+        print(f"    {Color.RED}{reputation.error if reputation else 'No data'}{Color.RESET}")
+
+    porting = report.get("porting")
+    print(f"\n{Color.GREEN}{Color.BOLD}[+] PORTING ANALYSIS (static vs live carrier){Color.RESET}")
+    if porting and porting.status == "ok":
+        for k, v in porting.data.items():
+            print(f"    {Color.YELLOW}{k:<26}{Color.RESET}: {v}")
+    elif porting and porting.status == "skipped":
+        print(f"    {Color.YELLOW}[skipped] {porting.error}{Color.RESET}")
+    else:
+        print(f"    {Color.RED}{porting.error if porting else 'No data'}{Color.RESET}")
 
     print(f"\n{Color.CYAN}{'═'*55}{Color.RESET}\n")
 
